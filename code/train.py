@@ -29,6 +29,7 @@ parser.add_argument('--batch_size', type=int, default=8)
 parser.add_argument('--accumulation_steps', type=int, default=4)
 parser.add_argument('--epochs', type=int, default=5)
 parser.add_argument('--n_workers', type=int, default=8)
+parser.add_argument('--patience', type=int, default=2)
 
 args = parser.parse_args()
 
@@ -36,6 +37,8 @@ os.makedirs(data_dir / "outputs", exist_ok=True)
 
 exp_name = args.exp_name
 os.makedirs(data_dir / f"outputs/{exp_name}", exist_ok=True)
+
+patience = args.patience
 
 train_df_mark = pd.read_csv(args.train_mark_path).drop("parent_id", axis=1).dropna().reset_index(drop=True)
 train_fts = json.load(open(args.train_features_path))
@@ -103,6 +106,10 @@ def train(model, train_loader, val_loader, epochs):
     criterion = torch.nn.L1Loss()
     scaler = torch.cuda.amp.GradScaler()
 
+
+    best_valid = None
+    best_valid_epoch = None
+    patience_count = 0
     for e in range(epochs):
         model.train()
         tbar = tqdm(train_loader, file=sys.stdout)
@@ -135,8 +142,32 @@ def train(model, train_loader, val_loader, epochs):
         val_df["pred"] = val_df.groupby(["id", "cell_type"])["rank"].rank(pct=True)
         val_df.loc[val_df["cell_type"] == "markdown", "pred"] = y_pred
         y_dummy = val_df.sort_values("pred").groupby('id')['cell_id'].apply(list)
-        print("Valid preds score", kendall_tau(df_orders.loc[y_dummy.index], y_dummy))
-        torch.save(model.state_dict(), data_dir / f"outputs/{exp_name}/model.bin")
+
+
+        valid_score = kendall_tau(df_orders.loc[y_dummy.index]
+        print(f"Valid preds score: {valid_score:.4f}", y_dummy))
+
+        if best_valid is None:
+            best_valid = valid_score
+            best_valid_epoch = e
+        elif valid_score > best_valid:
+            prev_best_valid = best_valid
+            best_valid = valid_score
+            best_valid_epoch = e
+            print(f"Improved (Valid Score: {prev_best_valid:.4f} --> {best_valid:.4f}, Epoch: {best_valid_epoch})")
+            torch.save(model.state_dict(), data_dir / f"outputs/{exp_name}/model_best_{best_valid_epoch}epochs_{best_valid:.4f}.bin")
+            # Reset
+            patience_count = 0
+            continue
+        else:
+            patience_count += 1
+            if patience_count  > patience:
+                print(f"Early stopped (Best Valid Score: {best_valid:.4f}, Epoch: {best_valid_epoch})")
+                break
+            else:
+                print("Not improved.")
+
+        torch.save(model.state_dict(), data_dir / f"outputs/{exp_name}/model_last.bin")
 
     return model, y_pred
 
