@@ -129,7 +129,7 @@ def train(model, train_loader, val_loader, epochs):
 
             avg_loss = np.round(np.mean(loss_list), 4)
 
-            tbar.set_description(f"Epoch {e + 1} Loss: {avg_loss} lr: {scheduler.get_last_lr()}")
+            tbar.set_description(f"Epoch {e + 1} Loss: {avg_loss:.4f} lr: {scheduler.get_last_lr():.6f}")
 
         y_val, y_pred = validate(model, val_loader)
         val_df["pred"] = val_df.groupby(["id", "cell_type"])["rank"].rank(pct=True)
