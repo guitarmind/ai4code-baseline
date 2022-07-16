@@ -4,10 +4,11 @@ from transformers import AutoTokenizer
 
 class MarkdownDataset(Dataset):
 
-    def __init__(self, df, model_name_or_path, total_max_len, md_max_len, fts):
+    def __init__(self, df, model_name_or_path, total_max_len, md_max_len, fts, code_max_len=23):
         super().__init__()
         self.df = df.reset_index(drop=True)
         self.md_max_len = md_max_len
+        self.code_max_len = code_max_len
         self.total_max_len = total_max_len  # maxlen allowed by model config
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
         self.fts = fts
@@ -27,7 +28,7 @@ class MarkdownDataset(Dataset):
         code_inputs = self.tokenizer.batch_encode_plus(
             [str(x) for x in self.fts[row.id]["codes"]],
             add_special_tokens=True,
-            max_length=23,
+            max_length=self.code_max_len,
             padding="max_length",
             truncation=True
         )

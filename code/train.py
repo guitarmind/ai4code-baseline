@@ -33,6 +33,7 @@ parser.add_argument('--val_features_path', type=str, default=data_dir / 'data/va
 parser.add_argument('--val_path', type=str, default=data_dir / 'data/val.csv')
 
 parser.add_argument('--md_max_len', type=int, default=64)
+parser.add_argument('--code_max_len', type=int, default=23)
 parser.add_argument('--total_max_len', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=8)
 parser.add_argument('--accumulation_steps', type=int, default=4)
@@ -62,9 +63,9 @@ df_orders = pd.read_csv(
 ).str.split()
 
 train_ds = MarkdownDataset(train_df_mark, model_name_or_path=args.model_name_or_path, md_max_len=args.md_max_len,
-                           total_max_len=args.total_max_len, fts=train_fts)
+                           total_max_len=args.total_max_len, fts=train_fts, code_max_len=args.code_max_len)
 val_ds = MarkdownDataset(val_df_mark, model_name_or_path=args.model_name_or_path, md_max_len=args.md_max_len,
-                         total_max_len=args.total_max_len, fts=val_fts)
+                         total_max_len=args.total_max_len, fts=val_fts, code_max_len=args.code_max_len)
 train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers,
                           pin_memory=False, drop_last=True)
 val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, num_workers=args.n_workers,
