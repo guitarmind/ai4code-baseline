@@ -12,6 +12,7 @@ import torch
 import argparse
 
 parser = argparse.ArgumentParser(description='Process some arguments')
+parser.add_argument('--exp_name', type=str, default='codebert-base-v1')
 parser.add_argument('--model_name_or_path', type=str, default='microsoft/codebert-base')
 parser.add_argument('--train_mark_path', type=str, default='./data/train_mark.csv')
 parser.add_argument('--train_features_path', type=str, default='./data/train_fts.json')
@@ -27,8 +28,11 @@ parser.add_argument('--epochs', type=int, default=5)
 parser.add_argument('--n_workers', type=int, default=8)
 
 args = parser.parse_args()
-os.mkdir("./outputs")
-data_dir = Path('..//input/')
+
+data_dir = Path('/workspace/Kaggle/AI4Code')
+# data_dir = Path('..//input/')
+
+os.mkdir(data_dir / "outputs")
 
 train_df_mark = pd.read_csv(args.train_mark_path).drop("parent_id", axis=1).dropna().reset_index(drop=True)
 train_fts = json.load(open(args.train_features_path))
@@ -36,7 +40,6 @@ val_df_mark = pd.read_csv(args.val_mark_path).drop("parent_id", axis=1).dropna()
 val_fts = json.load(open(args.val_features_path))
 val_df = pd.read_csv(args.val_path)
 
-order_df = pd.read_csv("../input/train_orders.csv").set_index("id")
 df_orders = pd.read_csv(
     data_dir / 'train_orders.csv',
     index_col='id',
@@ -130,7 +133,7 @@ def train(model, train_loader, val_loader, epochs):
         val_df.loc[val_df["cell_type"] == "markdown", "pred"] = y_pred
         y_dummy = val_df.sort_values("pred").groupby('id')['cell_id'].apply(list)
         print("Preds score", kendall_tau(df_orders.loc[y_dummy.index], y_dummy))
-        torch.save(model.state_dict(), "./outputs/model.bin")
+        torch.save(model.state_dict(), data_dir / f"outputs/{exp_name}.bin")
 
     return model, y_pred
 

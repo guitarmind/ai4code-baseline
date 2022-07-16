@@ -6,9 +6,10 @@ from scipy import sparse
 from tqdm import tqdm
 import os
 
-data_dir = Path('..//input/')
-if not os.path.exists("./data"):
-    os.mkdir("./data")
+data_dir = Path('/workspace/Kaggle/AI4Code')
+# data_dir = Path('..//input/')
+if not os.path.exists(data_dir / "data"):
+    os.mkdir(data_dir / "data")
 
 def read_notebook(path):
     return (
@@ -73,10 +74,10 @@ val_df = df.loc[val_ind].reset_index(drop=True)
 # Base markdown dataframes
 train_df_mark = train_df[train_df["cell_type"] == "markdown"].reset_index(drop=True)
 val_df_mark = val_df[val_df["cell_type"] == "markdown"].reset_index(drop=True)
-train_df_mark.to_csv("./data/train_mark.csv", index=False)
-val_df_mark.to_csv("./data/val_mark.csv", index=False)
-val_df.to_csv("./data/val.csv", index=False)
-train_df.to_csv("./data/train.csv", index=False)
+train_df_mark.to_csv(data_dir / "data/train_mark.csv", index=False)
+val_df_mark.to_csv(data_dir / "data/val_mark.csv", index=False)
+val_df.to_csv(data_dir / "data/val.csv", index=False)
+train_df.to_csv(data_dir / "data/train.csv", index=False)
 
 
 # Additional code cells
@@ -116,6 +117,6 @@ def get_features(df):
     return features
 
 val_fts = get_features(val_df)
-json.dump(val_fts, open("./data/val_fts.json","wt"))
+json.dump(val_fts, open(data_dir / "data/val_fts.json","wt"))
 train_fts = get_features(train_df)
-json.dump(train_fts, open("./data/train_fts.json","wt"))
+json.dump(train_fts, open(data_dir / "data/train_fts.json","wt"))
