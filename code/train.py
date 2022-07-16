@@ -11,14 +11,17 @@ from metrics import *
 import torch
 import argparse
 
+data_dir = Path('/workspace/Kaggle/AI4Code')
+# data_dir = Path('..//input/')
+
 parser = argparse.ArgumentParser(description='Process some arguments')
 parser.add_argument('--exp_name', type=str, default='codebert-base-v1')
 parser.add_argument('--model_name_or_path', type=str, default='microsoft/codebert-base')
-parser.add_argument('--train_mark_path', type=str, default='./data/train_mark.csv')
-parser.add_argument('--train_features_path', type=str, default='./data/train_fts.json')
-parser.add_argument('--val_mark_path', type=str, default='./data/val_mark.csv')
-parser.add_argument('--val_features_path', type=str, default='./data/val_fts.csv')
-parser.add_argument('--val_path', type=str, default="./data/val.csv")
+parser.add_argument('--train_mark_path', type=str, default=data_dir / 'data/train_mark.csv')
+parser.add_argument('--train_features_path', type=str, default=data_dir / 'data/train_fts.json')
+parser.add_argument('--val_mark_path', type=str, default=data_dir / 'data/val_mark.csv')
+parser.add_argument('--val_features_path', type=str, default=data_dir / 'data/val_fts.csv')
+parser.add_argument('--val_path', type=str, default=data_dir / 'data/val.csv')
 
 parser.add_argument('--md_max_len', type=int, default=64)
 parser.add_argument('--total_max_len', type=int, default=512)
@@ -28,9 +31,6 @@ parser.add_argument('--epochs', type=int, default=5)
 parser.add_argument('--n_workers', type=int, default=8)
 
 args = parser.parse_args()
-
-data_dir = Path('/workspace/Kaggle/AI4Code')
-# data_dir = Path('..//input/')
 
 os.mkdir(data_dir / "outputs")
 
