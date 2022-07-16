@@ -10,6 +10,15 @@ import sys, os
 from metrics import *
 import torch
 import argparse
+import random
+
+
+rand_seed = 1120
+torch.manual_seed(rand_seed)
+random.seed(rand_seed)
+np.random.seed(rand_seed)
+torch.backends.cudnn.benchmark = False
+torch.use_deterministic_algorithms(True)
 
 data_dir = Path('/workspace/Kaggle/AI4Code')
 # data_dir = Path('..//input/')
