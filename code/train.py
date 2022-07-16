@@ -144,8 +144,8 @@ def train(model, train_loader, val_loader, epochs):
         y_dummy = val_df.sort_values("pred").groupby('id')['cell_id'].apply(list)
 
 
-        valid_score = kendall_tau(df_orders.loc[y_dummy.index]
-        print(f"Valid preds score: {valid_score:.4f}", y_dummy))
+        valid_score = kendall_tau(df_orders.loc[y_dummy.index], y_dummy)
+        print(f"Valid Score: {valid_score:.4f}")
 
         if best_valid is None:
             best_valid = valid_score
