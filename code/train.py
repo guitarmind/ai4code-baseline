@@ -32,10 +32,10 @@ parser.add_argument('--n_workers', type=int, default=8)
 
 args = parser.parse_args()
 
-os.mkdir(data_dir / "outputs")
+os.makedirs(data_dir / "outputs", exist_ok=True)
 
 exp_name = args.exp_name
-os.mkdir(data_dir / f"outputs/{exp_name}")
+os.makedirs(data_dir / f"outputs/{exp_name}", exist_ok=True)
 
 train_df_mark = pd.read_csv(args.train_mark_path).drop("parent_id", axis=1).dropna().reset_index(drop=True)
 train_fts = json.load(open(args.train_features_path))
