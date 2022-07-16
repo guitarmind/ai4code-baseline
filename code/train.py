@@ -34,6 +34,9 @@ data_dir = Path('/workspace/Kaggle/AI4Code')
 
 os.mkdir(data_dir / "outputs")
 
+exp_name = args.exp_name
+os.mkdir(data_dir / f"outputs/{exp_name}")
+
 train_df_mark = pd.read_csv(args.train_mark_path).drop("parent_id", axis=1).dropna().reset_index(drop=True)
 train_fts = json.load(open(args.train_features_path))
 val_df_mark = pd.read_csv(args.val_mark_path).drop("parent_id", axis=1).dropna().reset_index(drop=True)
@@ -132,8 +135,8 @@ def train(model, train_loader, val_loader, epochs):
         val_df["pred"] = val_df.groupby(["id", "cell_type"])["rank"].rank(pct=True)
         val_df.loc[val_df["cell_type"] == "markdown", "pred"] = y_pred
         y_dummy = val_df.sort_values("pred").groupby('id')['cell_id'].apply(list)
-        print("Preds score", kendall_tau(df_orders.loc[y_dummy.index], y_dummy))
-        torch.save(model.state_dict(), data_dir / f"outputs/{exp_name}.bin")
+        print("Valid preds score", kendall_tau(df_orders.loc[y_dummy.index], y_dummy))
+        torch.save(model.state_dict(), data_dir / f"outputs/{exp_name}/model.bin")
 
     return model, y_pred
 
