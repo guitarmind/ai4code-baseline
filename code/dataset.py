@@ -33,7 +33,7 @@ class MarkdownDataset(Dataset):
             truncation=True
         )
         n_md = self.fts[row.id]["total_md"]
-        n_code = self.fts[row.id]["total_md"]
+        n_code = self.fts[row.id]["total_code"]
         if n_md + n_code == 0:
             fts = torch.FloatTensor([0])
         else:
