@@ -153,7 +153,6 @@ def train(model, train_loader, val_loader, epochs):
         val_df.loc[val_df["cell_type"] == "markdown", "pred"] = y_pred
         y_dummy = val_df.sort_values("pred").groupby('id')['cell_id'].apply(list)
 
-
         valid_score = kendall_tau(df_orders.loc[y_dummy.index], y_dummy)
         print(f"Valid Score: {valid_score:.4f}")
 
@@ -171,7 +170,7 @@ def train(model, train_loader, val_loader, epochs):
             continue
         else:
             patience_count += 1
-            if patience_count  > patience:
+            if patience_count > patience:
                 print(f"Early stopped (Best Valid Score: {best_valid:.4f}, Epoch: {best_valid_epoch})")
                 break
             else:
