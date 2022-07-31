@@ -203,5 +203,5 @@ def train(model, train_loader, val_loader, epochs):
 
 model = MarkdownModel(args.pretrained_model_name)
 model = model.cuda()
-model.load_state_dict(torch.load(model_name_or_path))
+model.load_state_dict(torch.load(args.model_name_or_path))
 model, y_pred = train(model, train_loader, val_loader, epochs=args.epochs)
