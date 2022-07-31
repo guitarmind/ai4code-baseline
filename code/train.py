@@ -78,9 +78,9 @@ df_orders = pd.read_csv(
     squeeze=True,
 ).str.split()
 
-train_ds = MarkdownDataset(train_df_mark, model_name_or_path=args.model_name_or_path, md_max_len=args.md_max_len,
+train_ds = MarkdownDataset(train_df_mark, model_name_or_path=args.pretrained_model_name, md_max_len=args.md_max_len,
                            total_max_len=args.total_max_len, fts=train_fts, code_max_len=args.code_max_len)
-val_ds = MarkdownDataset(val_df_mark, model_name_or_path=args.model_name_or_path, md_max_len=args.md_max_len,
+val_ds = MarkdownDataset(val_df_mark, model_name_or_path=args.pretrained_model_name, md_max_len=args.md_max_len,
                          total_max_len=args.total_max_len, fts=val_fts, code_max_len=args.code_max_len)
 train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers,
                           pin_memory=False, drop_last=True)
