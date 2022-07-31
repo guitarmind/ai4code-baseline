@@ -26,14 +26,14 @@ class MarkdownDataset(Dataset):
             truncation=True
         )
         code_inputs = self.tokenizer.batch_encode_plus(
-            [str(x) for x in self.fts[row.id]["codes"]],
+            [str(x) for x in self.fts[str(row.id)]["codes"]],
             add_special_tokens=True,
             max_length=self.code_max_len,
             padding="max_length",
             truncation=True
         )
-        n_md = self.fts[row.id]["total_md"]
-        n_code = self.fts[row.id]["total_code"]
+        n_md = self.fts[str(row.id)]["total_md"]
+        n_code = self.fts[str(row.id)]["total_code"]
         if n_md + n_code == 0:
             fts = torch.FloatTensor([0])
         else:
