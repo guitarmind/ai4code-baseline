@@ -11,13 +11,14 @@ data_dir = Path('/workspace/Kaggle/AI4Code')
 if not os.path.exists(data_dir / "data"):
     os.mkdir(data_dir / "data")
 
+
 def read_notebook(path):
     return (
         pd.read_json(
             path,
             dtype={'cell_type': 'category', 'source': 'str'})
-            .assign(id=path.stem)
-            .rename_axis('cell_id')
+        .assign(id=path.stem)
+        .rename_axis('cell_id')
     )
 
 
@@ -27,9 +28,9 @@ notebooks_train = [
 ]
 df = (
     pd.concat(notebooks_train)
-        .set_index('id', append=True)
-        .swaplevel()
-        .sort_index(level='id', sort_remaining=False)
+    .set_index('id', append=True)
+    .swaplevel()
+    .sort_index(level='id', sort_remaining=False)
 )
 
 df_orders = pd.read_csv(
@@ -53,15 +54,30 @@ for id_, cell_order, cell_id in df_orders_.itertuples():
     ranks[id_] = {'cell_id': cell_id, 'rank': get_ranks(cell_order, cell_id)}
 df_ranks = (
     pd.DataFrame
-        .from_dict(ranks, orient='index')
-        .rename_axis('id')
-        .apply(pd.Series.explode)
-        .set_index('cell_id', append=True)
+    .from_dict(ranks, orient='index')
+    .rename_axis('id')
+    .apply(pd.Series.explode)
+    .set_index('cell_id', append=True)
 )
 
 df_ancestors = pd.read_csv(data_dir / 'train_ancestors.csv', index_col='id')
-df = df.reset_index().merge(df_ranks, on=["id", "cell_id"]).merge(df_ancestors, on=["id"])
+df = df.reset_index().merge(
+    df_ranks, on=["id", "cell_id"]).merge(df_ancestors, on=["id"])
 df["pct_rank"] = df["rank"] / df.groupby("id")["cell_id"].transform("count")
+
+# Load external dataset
+df_external = pd.read_csv(data_dir / 'ai4code-custom-data/data.csv')
+print("ai4code-custom-data:", df_external.shape)
+df_external = df_external.rename(columns={'notebook_id': 'id'})
+df_external["id"] = df_external["id"].astype(str)
+df_external["cell_id"] = df_external["id"].astype(
+    str) + "_" + df_external["rank"].astype(str)
+df_external["ancestor_id"] = df_external["id"].astype(str)
+df_external["parent_id"] = np.nan
+df_external = df_external[[
+    'id', 'cell_id', 'cell_type', 'source', 'rank', 'ancestor_id', 'parent_id',
+    'pct_rank'
+]]
 
 from sklearn.model_selection import GroupShuffleSplit
 
@@ -71,13 +87,23 @@ train_ind, val_ind = next(splitter.split(df, groups=df["ancestor_id"]))
 train_df = df.loc[train_ind].reset_index(drop=True)
 val_df = df.loc[val_ind].reset_index(drop=True)
 
+# Merge with training set
+train_df = pd.concat((train_df, df_external), axis=0).reset_index(drop=True)
+print("Merged training dataset:", train_df.shape)
+print("Valid dataset:", val_df.shape)
+
 # Base markdown dataframes
-train_df_mark = train_df[train_df["cell_type"] == "markdown"].reset_index(drop=True)
+train_df_mark = train_df[train_df["cell_type"]
+                         == "markdown"].reset_index(drop=True)
 val_df_mark = val_df[val_df["cell_type"] == "markdown"].reset_index(drop=True)
-train_df_mark.to_csv(data_dir / "data/train_mark.csv", index=False)
+train_df_mark.to_csv(data_dir / "data/train_mark_ext.csv", index=False)
 val_df_mark.to_csv(data_dir / "data/val_mark.csv", index=False)
 val_df.to_csv(data_dir / "data/val.csv", index=False)
-train_df.to_csv(data_dir / "data/train.csv", index=False)
+train_df.to_csv(data_dir / "data/train_ext.csv", index=False)
+# train_df_mark.to_csv(data_dir / "data/train_mark.csv", index=False)
+# val_df_mark.to_csv(data_dir / "data/val_mark.csv", index=False)
+# val_df.to_csv(data_dir / "data/val.csv", index=False)
+# train_df.to_csv(data_dir / "data/train.csv", index=False)
 
 
 # Additional code cells
@@ -88,7 +114,8 @@ def clean_code(cell):
 def sample_cells(cells, n):
     cells = [clean_code(cell) for cell in cells]
     if n >= len(cells):
-        return [cell[:200] for cell in cells]
+        return [" ".join(cell.split()[:50]) for cell in cells]
+        # return [cell[:200] for cell in cells]
     else:
         results = []
         step = len(cells) / n
@@ -117,6 +144,10 @@ def get_features(df):
     return features
 
 val_fts = get_features(val_df)
-json.dump(val_fts, open(data_dir / "data/val_fts.json","wt"))
+json.dump(val_fts, open(data_dir / "data/val_fts.json", "wt"))
 train_fts = get_features(train_df)
-json.dump(train_fts, open(data_dir / "data/train_fts.json","wt"))
+json.dump(train_fts, open(data_dir / "data/train_fts_ext.json", "wt"))
+# val_fts = get_features(val_df)
+# json.dump(val_fts, open(data_dir / "data/val_fts.json", "wt"))
+# train_fts = get_features(train_df)
+# json.dump(train_fts, open(data_dir / "data/train_fts.json", "wt"))

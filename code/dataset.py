@@ -44,7 +44,8 @@ class MarkdownDataset(Dataset):
             ids.extend(x[:-1])
         ids = ids[:self.total_max_len]
         if len(ids) != self.total_max_len:
-            ids = ids + [self.tokenizer.pad_token_id, ] * (self.total_max_len - len(ids))
+            ids = ids + [self.tokenizer.pad_token_id, ] * \
+                (self.total_max_len - len(ids))
         ids = torch.LongTensor(ids)
 
         mask = inputs['attention_mask']
@@ -52,7 +53,8 @@ class MarkdownDataset(Dataset):
             mask.extend(x[:-1])
         mask = mask[:self.total_max_len]
         if len(mask) != self.total_max_len:
-            mask = mask + [self.tokenizer.pad_token_id, ] * (self.total_max_len - len(mask))
+            mask = mask + [self.tokenizer.pad_token_id, ] * \
+                (self.total_max_len - len(mask))
         mask = torch.LongTensor(mask)
 
         assert len(ids) == self.total_max_len
