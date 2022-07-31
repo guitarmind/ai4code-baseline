@@ -6,7 +6,8 @@ import pandas as pd
 from torch.utils.data import DataLoader, Dataset
 from model import *
 from tqdm import tqdm
-import sys, os
+import sys
+import os
 from metrics import *
 import torch
 import argparse
@@ -26,11 +27,18 @@ data_dir = Path('/workspace/Kaggle/AI4Code')
 
 parser = argparse.ArgumentParser(description='Process some arguments')
 parser.add_argument('--exp_name', type=str, default='codebert-base-v1')
-parser.add_argument('--model_name_or_path', type=str, default='microsoft/codebert-base')
-parser.add_argument('--train_mark_path', type=str, default=data_dir / 'data/train_mark_ext.csv')
-parser.add_argument('--train_features_path', type=str, default=data_dir / 'data/train_fts_ext.json')
-parser.add_argument('--val_mark_path', type=str, default=data_dir / 'data/val_mark.csv')
-parser.add_argument('--val_features_path', type=str, default=data_dir / 'data/val_fts.json')
+parser.add_argument('--pretrained_model_name', type=str,
+                    default='microsoft/graphcodebert-base')
+parser.add_argument('--model_name_or_path', type=str,
+                    default='microsoft/codebert-base')
+parser.add_argument('--train_mark_path', type=str,
+                    default=data_dir / 'data/train_mark_ext.csv')
+parser.add_argument('--train_features_path', type=str,
+                    default=data_dir / 'data/train_fts_ext.json')
+parser.add_argument('--val_mark_path', type=str,
+                    default=data_dir / 'data/val_mark.csv')
+parser.add_argument('--val_features_path', type=str,
+                    default=data_dir / 'data/val_fts.json')
 parser.add_argument('--val_path', type=str, default=data_dir / 'data/val.csv')
 # parser.add_argument('--train_mark_path', type=str, default=data_dir / 'data/train_mark.csv')
 # parser.add_argument('--train_features_path', type=str, default=data_dir / 'data/train_fts.json')
@@ -56,9 +64,11 @@ os.makedirs(data_dir / f"outputs/{exp_name}", exist_ok=True)
 
 patience = args.patience
 
-train_df_mark = pd.read_csv(args.train_mark_path).drop("parent_id", axis=1).dropna().reset_index(drop=True)
+train_df_mark = pd.read_csv(args.train_mark_path).drop(
+    "parent_id", axis=1).dropna().reset_index(drop=True)
 train_fts = json.load(open(args.train_features_path))
-val_df_mark = pd.read_csv(args.val_mark_path).drop("parent_id", axis=1).dropna().reset_index(drop=True)
+val_df_mark = pd.read_csv(args.val_mark_path).drop(
+    "parent_id", axis=1).dropna().reset_index(drop=True)
 val_fts = json.load(open(args.val_features_path))
 val_df = pd.read_csv(args.val_path)
 
@@ -109,11 +119,14 @@ def train(model, train_loader, val_loader, epochs):
     param_optimizer = list(model.named_parameters())
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
     optimizer_grouped_parameters = [
-        {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
+        {'params': [p for n, p in param_optimizer if not any(
+            nd in n for nd in no_decay)], 'weight_decay': 0.01},
+        {'params': [p for n, p in param_optimizer if any(
+            nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
 
-    num_train_optimization_steps = int(args.epochs * len(train_loader) / args.accumulation_steps)
+    num_train_optimization_steps = int(
+        args.epochs * len(train_loader) / args.accumulation_steps)
     optimizer = AdamW(optimizer_grouped_parameters, lr=3e-5,
                       correct_bias=False)  # To reproduce BertAdam specific behavior set correct_bias=False
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0.05 * num_train_optimization_steps,
@@ -121,7 +134,6 @@ def train(model, train_loader, val_loader, epochs):
 
     criterion = torch.nn.L1Loss()
     scaler = torch.cuda.amp.GradScaler()
-
 
     best_valid = None
     best_valid_epoch = None
@@ -155,9 +167,11 @@ def train(model, train_loader, val_loader, epochs):
             tbar.set_description(f"Epoch {e} Loss: {avg_loss:.4f} lr: {scheduler.get_last_lr()[0]:.6f}")
 
         y_val, y_pred = validate(model, val_loader)
-        val_df["pred"] = val_df.groupby(["id", "cell_type"])["rank"].rank(pct=True)
+        val_df["pred"] = val_df.groupby(["id", "cell_type"])[
+            "rank"].rank(pct=True)
         val_df.loc[val_df["cell_type"] == "markdown", "pred"] = y_pred
-        y_dummy = val_df.sort_values("pred").groupby('id')['cell_id'].apply(list)
+        y_dummy = val_df.sort_values("pred").groupby('id')[
+            'cell_id'].apply(list)
 
         valid_score = kendall_tau(df_orders.loc[y_dummy.index], y_dummy)
         print(f"Valid Score: {valid_score:.4f}")
@@ -187,6 +201,7 @@ def train(model, train_loader, val_loader, epochs):
     return model, y_pred
 
 
-model = MarkdownModel(args.model_name_or_path)
+model = MarkdownModel(args.pretrained_model_name)
 model = model.cuda()
+model.load_state_dict(torch.load(model_name_or_path))
 model, y_pred = train(model, train_loader, val_loader, epochs=args.epochs)
